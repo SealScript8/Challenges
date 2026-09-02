@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1252">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文字化け · 百科事典</title>
+  <style>
+    /* クラシックな紙面スタイル – 角丸なし・装飾最小 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #f2ede2;
+      color: #1e1a14;
+      font-family: 'Times New Roman', 'Nimbus Roman', 'Georgia', serif;
+      font-size: 18px;
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .wiki-wrapper {
+      max-width: 820px;
+      width: 100%;
+      background: #fcf9f2;
+      border: 1px solid #8b7e6b;
+      padding: 2rem 2.2rem 2.5rem;
+      box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.06);
+    }
+
+    /* ヘッダー */
+    .wiki-header {
+      border-bottom: 2px solid #3c3c3c;
+      padding-bottom: 0.3rem;
+      margin-bottom: 1.6rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+    }
+
+    .wiki-title {
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #1f1a14;
+      font-family: 'Times New Roman', serif;
+    }
+
+    .wiki-sub {
+      font-size: 0.85rem;
+      color: #4d4436;
+      background: #e5dfd4;
+      padding: 0.1rem 0.8rem;
+      border: 1px solid #b7aa96;
+      font-variant: small-caps;
+      letter-spacing: 0.04em;
+    }
+
+    /* 本文 */
+    .wiki-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .wiki-content p {
+      text-align: justify;
+      text-justify: inter-word;
+      margin-bottom: 0.3rem;
+    }
+
+    .wiki-content h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-top: 1.2rem;
+      border-bottom: 1px solid #c6b9a8;
+      padding-bottom: 0.15rem;
+      font-family: 'Times New Roman', serif;
+      letter-spacing: 0.02em;
+    }
+
+    .wiki-content h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-top: 0.9rem;
+      font-family: 'Times New Roman', serif;
+    }
+
+    .wiki-content ul {
+      margin-left: 1.8rem;
+      margin-top: 0.2rem;
+      margin-bottom: 0.6rem;
+      list-style-type: square;
+    }
+
+    .wiki-content ul li {
+      margin-bottom: 0.15rem;
+    }
+
+    .wiki-content .block-quote {
+      background: #eeeadf;
+      padding: 0.6rem 1.4rem;
+      border-left: 5px solid #7f6e58;
+      margin: 0.8rem 0;
+      font-size: 0.95rem;
+    }
+
+    .wiki-content .sig {
+      font-size: 0.85rem;
+      color: #4d4436;
+      border-top: 1px solid #d6cdbc;
+      padding-top: 0.8rem;
+      margin-top: 1rem;
+      text-align: right;
+      font-style: italic;
+    }
+
+    .footer-note {
+      margin-top: 2rem;
+      border-top: 1px solid #c6b9a8;
+      padding-top: 0.6rem;
+      font-size: 0.78rem;
+      color: #4d4436;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    /* トースト — 角丸なし */
+    .toast-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      pointer-events: none;
+      z-index: 999;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 2.8rem;
+    }
+
+    .toast-wrapper {
+      pointer-events: auto;
+      background: #2d2a24;
+      border: 1px solid #5a4f41;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+      min-width: 240px;
+      max-width: 540px;
+      width: fit-content;
+      display: flex;
+      flex-direction: column;
+      border-radius: 0;
+    }
+
+    .toast-box {
+      background: #2d2a24;
+      color: #f2efe8;
+      padding: 0.8rem 1.8rem 0.5rem 1.8rem;
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      line-height: 1.4;
+      flex-wrap: wrap;
+      border-radius: 0;
+    }
+
+    .toast-icon {
+      display: inline-block;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #e0cba8;
+      background: #3d352b;
+      width: 1.8rem;
+      height: 1.8rem;
+      text-align: center;
+      line-height: 1.8rem;
+      border: 1px solid #7f6e58;
+      flex-shrink: 0;
+      font-family: 'Courier New', monospace;
+      border-radius: 0;
+    }
+
+    .toast-msg {
+      display: inline-block;
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      font-size: 0.95rem;
+      flex: 1;
+    }
+
+    .toast-msg strong {
+      font-weight: 600;
+      color: #f2e3c6;
+    }
+
+    .toast-close {
+      background: #3d352b;
+      border: 1px solid #6a5e4d;
+      color: #d6cdbc;
+      font-size: 1.1rem;
+      line-height: 1;
+      padding: 0.05rem 0.6rem 0.15rem 0.6rem;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      transition: background 0.1s;
+      border-radius: 0;
+      flex-shrink: 0;
+      margin-left: 0.2rem;
+    }
+
+    .toast-close:hover {
+      background: #5a4f41;
+      color: #fff7ea;
+    }
+
+    .toast-timer-track {
+      width: 100%;
+      height: 4px;
+      background: #4a4238;
+      position: relative;
+      border-top: 1px solid #3d352b;
+    }
+
+    .toast-timer-fill {
+      height: 100%;
+      width: 100%;
+      background: #b8a68b;
+      transition: width 0.1s linear;
+      border-radius: 0;
+    }
+
+    .toast-hidden {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    /* すべて角丸なし */
+    .wiki-wrapper,
+    .toast-wrapper,
+    .toast-box,
+    .toast-close,
+    .toast-icon,
+    .toast-timer-track {
+      border-radius: 0 !important;
+    }
+
+    @media (max-width: 600px) {
+      .wiki-wrapper {
+        padding: 1.2rem;
+      }
+      .wiki-title {
+        font-size: 1.8rem;
+      }
+      .toast-wrapper {
+        max-width: 94%;
+        margin: 0 1rem;
+      }
+      .toast-box {
+        padding: 0.7rem 1.2rem 0.4rem 1.2rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .toast-msg {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wiki-wrapper">
+  <div class="wiki-header">
+    <span class="wiki-title">文字化け</span>
+    <span class="wiki-sub">百科事典・第十三巻</span>
+  </div>
+
+  <div class="wiki-content">
+
+    <!-- 本文：ウィキペディア「文字化け」より、ラテン文字を非ラテン文字に置換 -->
+    <p><strong>文字化け</strong>（もじばけ）とは、計算機において文字が正しく表示・印刷されず、本来とは異なる不規則で意味不明な記号や文字の連なりとして現れる現象である<sup>〔1〕</sup>。ある体系で符号化された文字列が、別の体系で復号されたときに発生する<sup>〔2〕</sup>。</p>
+
+    <h2>用語</h2>
+    <p>「文字化け」は文字が変形することを意味する日本語であるが<sup>〔2〕</sup>、英語においても借用されている<sup>〔1〕</sup>。久保芳之はこれについて、「アメリカで行われた最初の日本語アプリケーション」であるページメーカーの開発時、「英語で文字化けを説明するよりも、モジバケとは何かを理解させることの方が簡単であると考え、英語としてモジバケを定着させました」と述懐している<sup>〔3〕</sup>。</p>
+
+    <p>「文字化け」に相当する用語は他言語にも存在する。たとえば、中国語では同様の現象を乱碼と呼称する<sup>〔4〕</sup>。また、ロシア語では同様の現象を<span lang="ru">БНОПНЯ</span>と呼称した<sup>〔5〕</sup>。</p>
+
+    <h2>原因</h2>
+
+    <h3>文字コード</h3>
+    <p>文字化けは、特定の文字符号化方式で符号化された文字列を、異なる方式で解釈・表示しようとしたときに発生する<sup>〔1〕〔2〕</sup>。たとえば、アスキーにはカールアポストロフィ（ ’ ）が収録されていないため、ユニコードに準拠する文字符号化方式で入力した「that’s」といった文字列を、アスキーで解釈すると「thata.™ s」と表示される<sup>〔2〕</sup>。</p>
+
+    <p>文字化けの問題は、特に日本語をはじめとする東アジアの言語環境において顕著に発生した<sup>〔6〕</sup>。日本語環境において文字化けは、電子メールの送受信で起きるケースが多かった<sup>〔7〕</sup>。アスキー文字が七ビットであるのに対して、計算機でやり取りするデータの最小単位が八ビットであったことを背景に、インターネット黎明期のメーラーは最上位ビットを無視することがあり、八ビットすべてを利用するシフト・ジスやイーユーシー・ジェイピーで入力された文字列を送受信する際に支障をきたした。また、その後もヘッダーに記載された文字コードの情報に問題があった場合には、文字化けの問題がおこった<sup>〔8〕</sup>。また、ハイパーテキスト・マークアップ言語を記述する際、そのメタ情報に問題があった場合<sup>〔9〕</sup>、ファイルを圧縮・解凍する際の文字コードが異なった場合などにも、文字化けが発生した<sup>〔10〕</sup>。</p>
+
+    <h3>フォント</h3>
+    <p>文字コードの解釈に問題がなかったとしても、文字列の表示にあたって利用するフォントに問題があれば、文字化けが発生する。これはたとえば、日本語フォントがインストールされていない環境で日本語のウェブサイトを閲覧した際などに生じる<sup>〔1〕</sup>。また、丸囲い数字といった一部の文字（機種依存文字）は、標準化に先んじて各企業が独自に文字コードを割りふったため、互換性のうえで問題を生じさせた<sup>〔11〕</sup>。携帯電話の絵文字についても同様であり、二〇〇六年には各キャリアが自社の絵文字を他社の絵文字に変換するサービスを公開していた<sup>〔12〕</sup>。</p>
+
+    <p>ほかに、ビルマ語の計算機環境においては、ユニコードに準拠しないフォントであるザウジーが広く用いられていたため、ユニコードに準拠するフォントで入力した文字が、ザウジーを用いた環境では文字化けする現象がおこった<sup>〔13〕</sup>。ミャンマー政府はザウジーからユニコードへの移行を実行すべく、二〇一九年四月には政府機関で利用されるフォーマットをすべてユニコード準拠のものに変更した。政府は十月一日を「ユー・デー」に指定し、九月に国内メディアやプロバイダなどに、この日までにユニコードに対応するよう指示をおこなった<sup>〔14〕</sup>。</p>
+
+    <h2>大衆文化への影響</h2>
+    <p>廣田龍平は二〇二〇年の論考において、日本語環境において「現在では、対策が周知されていることに加え、多くの環境でユーティーエフ・エイトが標準となっている」ことを背景として、「文字化けは珍しいものとなっている一方、ホラー作品においてはなお文字化けが広く用いられている」と述べている。廣田は二ちゃんねる（五ちゃんねる）の「怖い話」を渉猟し、二〇〇〇年代には「パソコンや携帯端末の表示が（心霊スポットを訪れるなど）思わぬタイミングで文字化けしていた」といった記述がほとんどであったのに対して、「二〇〇九年頃より異常な世界に入ってしまった語り手が同地で判読不明な文字を見る、といったストーリーがあらわれるようになった」と論じる。</p>
+
+    <div class="block-quote">
+      「非人間的な視点から見れば、文字化けも世界の正常な働きの一環なのである」と論じ、「同じものを異なる方式で読み取った結果、まったく判断不能なものが立ち現れる文字化けという現象は、現実世界と異世界の差異を端的に示す『多自然主義的グリッチ　エフ エル エー ジー ｛ エム ゼロ ジェー イチ ビー ヨン ケー サン アンダースコア サン イー エヌ シー ゼロ ディー イチ エヌ ジー アンダースコア サン アール アール ゼロ アール }』として理解できる」と総括している<sup>〔15〕</sup>。
+    </div>
+
+    <h2>脚注</h2>
+    <ul>
+      <li>〔1〕 文字化けとは — アイティー用語辞典</li>
+      <li>〔2〕 キング，リッチー・エス．「ウィル・ユニコード・スーン・ビー・ザ・ユニバーサル・コード？」アイトリプルイー・スペクトラム，四十九巻，七号，二〇一二年</li>
+      <li>〔3〕 漢字トーク カンジトーク — 久保芳之からの説明メール</li>
+      <li>〔4〕 千葉商科大学デジタル中国語教室「文字化け」</li>
+      <li>〔5〕 インターネットスロヴァール「ЧТО ТАКОЕ БНОПНЯ」</li>
+      <li>〔6〕 ウエダ，ポール；ロー，カーファイ；チャン，マージョリー・ケー・エム．「コーパスの作成：広東語・客家語・台湾語のデジタルテキスト処理における問題」二〇二四年</li>
+      <li>〔7〕 エヌティーティー西日本「文字化け｜アイシーティー用語集」</li>
+      <li>〔8〕 柴田淳「いんさいどまっきんとっしゅ メール・クライアントの謎」日経マック，八巻，一〇号，二〇〇〇年</li>
+      <li>〔9〕 平岡信之「日本語文字コードについて」長野大学</li>
+      <li>〔10〕 日本経済新聞「圧縮・展開ソフトの文字化け対策 注目四品を比較する」二〇二〇年</li>
+      <li>〔11〕 東京大学教養学部「日本語文字コードと変換」</li>
+      <li>〔12〕 安岡孝一「ケータイの絵文字と文字コード」情報管理，五十巻，二号，二〇〇七年</li>
+      <li>〔13〕 はた「ミャンマー語フォント『ザウジー・ワン』の問題に直面した話」ジーエムオー・リサーチ，二〇二〇年</li>
+      <li>〔14〕 スー，エイント・テット「ザウジー・トゥ・ユニコード：ザ・ビッグ・スイッチ」フロンティア・ミャンマー，二〇一九年</li>
+      <li>〔15〕 廣田龍平「非人間的な文字列：譁・ュ怜喧縺代・螟夊・然主義的概念化」ユリイカ，五十二巻，十五号，二〇二〇年</li>
+    </ul>
+
+    <h2>関連項目</h2>
+    <ul>
+      <li>絶頂集 — 椎名林檎のライブ・シングル集。一部の曲名を演出的意図として文字化けさせている。</li>
+      <li>清水義範 — 文字化けを題材とした小説「文字化けの悦楽」を発表している（講談社文庫『私は作中の人物である』収録）。</li>
+      <li>幽霊語</li>
+      <li>特殊用途文字 — 「実在しない、あるいはコードが割り当てられていない」の意味を持つ記号</li>
+      <li>ブッシュ・ヒッド・ザ・ファクツ（ブッシュは事実を隠蔽した）</li>
+    </ul>
+
+    <div class="sig">
+      — 百科事典『世界知識』第四版より抄録
+    </div>
+
+  </div>
+
+  <div class="footer-note">
+    <span>百科事典 · 文字コード · 言語学</span>
+    <span>頁 二〇四七 · 文字化け</span>
+  </div>
+</div>
+
+<!-- トースト（変更なし：英語のまま） -->
+<div class="toast-overlay" id="toastOverlay">
+  <div class="toast-wrapper" id="toastWrapper">
+    <div class="toast-box">
+      <span class="toast-icon">!</span>
+      <span class="toast-msg">
+        <strong>Uh-oh!</strong> looks like the language is broken.
+      </span>
+      <button class="toast-close" id="closeToastBtn">✕</button>
+    </div>
+    <div class="toast-timer-track">
+      <div class="toast-timer-fill" id="timerFill" style="width: 100%;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    var overlay = document.getElementById('toastOverlay');
+    var timerFill = document.getElementById('timerFill');
+    var closeBtn = document.getElementById('closeToastBtn');
+
+    var timerInterval = null;
+    var timerWidth = 100;
+    var DURATION = 4500;
+    var STEP_INTERVAL = 50;
+    var DECREMENT = (STEP_INTERVAL / DURATION) * 100;
+
+    overlay.classList.add('toast-hidden');
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function resetTimer() {
+      timerWidth = 100;
+      timerFill.style.width = '100%';
+    }
+
+    function hideToast() {
+      stopTimer();
+      overlay.classList.add('toast-hidden');
+      resetTimer();
+    }
+
+    function startTimer() {
+      stopTimer();
+      resetTimer();
+      timerInterval = setInterval(function() {
+        timerWidth -= DECREMENT;
+        if (timerWidth <= 0) {
+          timerWidth = 0;
+          timerFill.style.width = '0%';
+          hideToast();
+          stopTimer();
+          return;
+        }
+        timerFill.style.width = timerWidth + '%';
+      }, STEP_INTERVAL);
+    }
+
+    function showToast() {
+      if (!overlay.classList.contains('toast-hidden')) {
+        stopTimer();
+        resetTimer();
+        startTimer();
+        return;
+      }
+      resetTimer();
+      overlay.classList.remove('toast-hidden');
+      startTimer();
+    }
+
+    closeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      hideToast();
+    });
+
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) {
+        hideToast();
+      }
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && !overlay.classList.contains('toast-hidden')) {
+        hideToast();
+      }
+    });
+
+    // 初回自動表示（2.6秒後）
+    var autoShown = false;
+    setTimeout(function() {
+      if (!autoShown && overlay.classList.contains('toast-hidden')) {
+        showToast();
+        autoShown = true;
+      }
+    }, 2600);
+
+    // 手動表示はないが、後続の自動表示を抑制
+    window.addEventListener('beforeunload', function() {
+      stopTimer();
+    });
+
+  })();
+</script>
+
+</body>
+</html>

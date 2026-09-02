@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>7‑Digit Dice Roller</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: #0d0d0d;
+            font-family: 'Courier New', Courier, 'VT323', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            user-select: none;
+            padding: 16px;
+        }
+        .app {
+            background: #141414;
+            border: 2px solid #3a3a3a;
+            border-radius: 8px;
+            padding: 20px 24px 24px;
+            display: flex;
+            flex-direction: row;
+            gap: 24px;
+            max-width: 1300px;
+            width: 100%;
+            min-height: 500px;
+        }
+        .panel-left {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        #dice-container {
+            width: 100%;
+            aspect-ratio: 16 / 5;
+            min-height: 180px;
+            background: #0a0a0a;
+            border: 1px solid #2a2a2a;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        #dice-container canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .controls {
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .result-display {
+            font-size: 2.2rem;
+            font-weight: 400;
+            letter-spacing: 0.04em;
+            color: #d4a574;
+            background: #0a0a0a;
+            padding: 4px 20px;
+            border: 1px solid #2a2a2a;
+            border-radius: 4px;
+            min-width: 160px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+            font-family: 'Courier New', monospace;
+        }
+        .result-display .label {
+            font-size: 0.65rem;
+            font-weight: 400;
+            color: #666;
+            letter-spacing: 0.12em;
+            display: block;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+            font-family: 'Courier New', monospace;
+        }
+        .btn-roll {
+            background: transparent;
+            border: 1px solid #d4a574;
+            color: #d4a574;
+            font-size: 1.1rem;
+            font-weight: 400;
+            font-family: 'Courier New', monospace;
+            padding: 8px 30px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.15s;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            background: #0a0a0a;
+        }
+        .btn-roll:hover {
+            background: #d4a574;
+            color: #0a0a0a;
+        }
+        .btn-roll:active {
+            opacity: 0.6;
+        }
+        .btn-roll:disabled {
+            opacity: 0.35;
+            pointer-events: none;
+        }
+        .panel-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-width: 180px;
+            max-width: 320px;
+        }
+        .panel-box {
+            flex: 1;
+            background: #0a0a0a;
+            border: 1px solid #2a2a2a;
+            border-radius: 4px;
+            padding: 10px 14px 12px;
+            display: flex;
+            flex-direction: column;
+            min-height: 120px;
+            overflow: hidden;
+        }
+        .panel-box .box-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #666;
+            margin-bottom: 6px;
+            font-family: 'Courier New', monospace;
+            flex-shrink: 0;
+        }
+        .panel-box .box-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: stretch;
+            overflow: hidden;
+            min-height: 0;
+            padding: 0;
+        }
+
+        .panel-box .box-content textarea,
+        .panel-box .box-content .output-text {
+            width: 100%;
+            flex: 1;
+            background: #0d0d0d;
+            border: none;
+            border-radius: 2px;
+            padding: 10px 12px;
+            font-size: 1.1rem;
+            font-family: 'Courier New', monospace;
+            color: #d4a574;
+            outline: none;
+            resize: none;
+            line-height: 1.5;
+            min-height: 60px;
+            overflow: auto;
+        }
+        .panel-box .box-content textarea {
+            background: #0d0d0d;
+            border: 1px solid #1f1f1f;
+        }
+        .panel-box .box-content textarea:focus {
+            border-color: #d4a574;
+        }
+        .panel-box .box-content textarea::placeholder {
+            color: #444;
+            font-size: 0.9rem;
+        }
+
+        .panel-box .box-content .output-text {
+            background: #0d0d0d;
+            border: 1px solid #1f1f1f;
+            display: flex;
+            align-items: flex-start;
+            word-break: break-all;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+            user-select: text;
+            cursor: text;
+            color: #d4a574;
+            font-size: 1.1rem;
+            line-height: 1.5;
+            min-height: 60px;
+        }
+        .panel-box .box-content .output-text:focus {
+            border-color: #d4a574;
+        }
+
+        .formula {
+            display: none;
+        }
+        @media (max-width: 820px) {
+            .app {
+                flex-direction: column;
+                padding: 16px;
+                gap: 18px;
+                min-height: auto;
+            }
+            .panel-right {
+                max-width: 100%;
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+            .panel-right .panel-box {
+                flex: 1 1 40%;
+                min-height: 100px;
+            }
+            #dice-container {
+                aspect-ratio: 16 / 6;
+                min-height: 120px;
+            }
+            .result-display {
+                font-size: 1.6rem;
+                min-width: 120px;
+                padding: 2px 14px;
+            }
+            .btn-roll {
+                font-size: 0.9rem;
+                padding: 6px 20px;
+            }
+            .controls {
+                gap: 12px;
+            }
+        }
+        @media (max-width: 500px) {
+            .app {
+                padding: 10px;
+                gap: 12px;
+            }
+            #dice-container {
+                aspect-ratio: 16 / 7;
+                min-height: 90px;
+            }
+            .panel-right {
+                flex-direction: column;
+            }
+            .panel-right .panel-box {
+                flex: 1 1 auto;
+                min-height: 80px;
+            }
+            .result-display {
+                font-size: 1.2rem;
+                min-width: 80px;
+                padding: 2px 10px;
+            }
+            .btn-roll {
+                font-size: 0.75rem;
+                padding: 5px 14px;
+            }
+            .panel-box .box-content textarea,
+            .panel-box .box-content .output-text {
+                font-size: 0.9rem;
+                padding: 8px 10px;
+                min-height: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="panel-left">
+            <div id="dice-container"></div>
+            <div class="controls">
+                <div class="result-display">
+                    <span class="label">Roll</span>
+                    <span id="result-value">0</span>
+                </div>
+                <button class="btn-roll" id="roll-btn">🎲 Roll</button>
+            </div>
+        </div>
+        <div class="panel-right">
+            <div class="panel-box">
+                <div class="box-label">⏺ Input</div>
+                <div class="box-content">
+                    <textarea id="hex-input" placeholder="...">e6540eb0e4b2bc1c952905ef6ab782869fd108ace60da642386df52409de</textarea>
+                </div>
+            </div>
+            <div class="panel-box">
+                <div class="box-label">⏺ Output</div>
+                <div class="box-content">
+                    <div class="output-text" id="output-value">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        function rc4Keystream(key, length) {
+            const S = Array.from({ length: 256 }, (_, i) => i);
+            let j = 0;
+            const keyBytes = key.toString().split('').map(c => c.charCodeAt(0));
+            
+            for (let i = 0; i < 256; i++) {
+                j = (j + S[i] + keyBytes[i % keyBytes.length]) & 0xFF;
+                [S[i], S[j]] = [S[j], S[i]];
+            }
+            
+            const keystream = [];
+            let i = 0;
+            j = 0;
+            for (let k = 0; k < length; k++) {
+                i = (i + 1) & 0xFF;
+                j = (j + S[i]) & 0xFF;
+                [S[i], S[j]] = [S[j], S[i]];
+                keystream.push(S[(S[i] + S[j]) & 0xFF]);
+            }
+            return keystream;
+        }
+
+        function rc4DecryptHex(hexStr, key) {
+            hexStr = hexStr.replace(/\s/g, '');
+            if (hexStr.length % 2 !== 0) {
+                throw new Error('Invalid hex string length');
+            }
+            
+            const cipherBytes = [];
+            for (let i = 0; i < hexStr.length; i += 2) {
+                cipherBytes.push(parseInt(hexStr.substr(i, 2), 16));
+            }
+            
+            const keystream = rc4Keystream(key, cipherBytes.length);
+            
+            const plainBytes = cipherBytes.map((b, i) => b ^ keystream[i]);
+            
+            let result = '';
+            for (const b of plainBytes) {
+                if (b >= 32 && b <= 126) {
+                    result += String.fromCharCode(b);
+                } else {
+                    result += '�';
+                }
+            }
+            return result;
+        }
+
+        function createD10Geometry(radius) {
+            const H = radius;
+            const h = H * (1 - Math.cos(Math.PI / 5)) / (1 + Math.cos(Math.PI / 5));
+            const r = radius * 0.85;
+            const top = [0, H, 0];
+            const bot = [0, -H, 0];
+            const upper = [];
+            const lower = [];
+            for (let k = 0; k < 5; k++) {
+                const aU = (k * 2 * Math.PI) / 5;
+                const aL = aU + Math.PI / 5;
+                upper.push([r * Math.cos(aU), h, r * Math.sin(aU)]);
+                lower.push([r * Math.cos(aL), -h, r * Math.sin(aL)]);
+            }
+            const verts = [];
+
+            function push3(v) { verts.push(v[0], v[1], v[2]); }
+            for (let k = 0; k < 5; k++) {
+                const nk = (k + 1) % 5;
+                push3(top);
+                push3(lower[k]);
+                push3(upper[k]);
+                push3(top);
+                push3(upper[nk]);
+                push3(lower[k]);
+                push3(bot);
+                push3(lower[k]);
+                push3(upper[nk]);
+                push3(bot);
+                push3(upper[nk]);
+                push3(lower[nk]);
+            }
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+            geo.computeVertexNormals();
+            return geo;
+        }
+
+        function computeFaces(geometry) {
+            const pos = geometry.getAttribute('position');
+            const totalTris = pos.count / 3;
+            const clusters = [];
+            for (let t = 0; t < totalTris; t++) {
+                const vi = t * 3;
+                const a = new THREE.Vector3().fromBufferAttribute(pos, vi);
+                const b = new THREE.Vector3().fromBufferAttribute(pos, vi + 1);
+                const c = new THREE.Vector3().fromBufferAttribute(pos, vi + 2);
+                const n = new THREE.Vector3()
+                    .crossVectors(
+                        new THREE.Vector3().subVectors(b, a),
+                        new THREE.Vector3().subVectors(c, a)
+                    )
+                    .normalize();
+                const mid = new THREE.Vector3().add(a).add(b).add(c).divideScalar(3);
+                if (n.dot(mid) < 0) n.negate();
+                let found = false;
+                for (const cl of clusters) {
+                    if (cl.normal.dot(n) > 0.999) {
+                        cl.verts.push(a, b, c);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    clusters.push({ normal: n.clone(), verts: [a, b, c] });
+                }
+            }
+            clusters.sort((a, b) => {
+                const an = a.normal,
+                    bn = b.normal;
+                if (Math.abs(an.x - bn.x) > 0.001) return an.x - bn.x;
+                if (Math.abs(an.y - bn.y) > 0.001) return an.y - bn.y;
+                return an.z - bn.z;
+            });
+            return clusters.map(cl => {
+                const centroid = new THREE.Vector3();
+                cl.verts.forEach(v => centroid.add(v));
+                centroid.divideScalar(cl.verts.length);
+                const unique = [];
+                for (const v of cl.verts) {
+                    let isDup = false;
+                    for (const u of unique) {
+                        if (v.distanceTo(u) < 0.001) { isDup = true; break; }
+                    }
+                    if (!isDup) unique.push(v.clone());
+                }
+                return { centroid: centroid.clone(), normal: cl.normal.clone(), verts: unique };
+            });
+        }
+
+        function computeFaceNumbers(faces) {
+            const n = faces.length;
+            const numbers = new Array(n).fill(0);
+            const target = 9;
+            const pairs = [];
+            const used = new Set();
+            for (let i = 0; i < n; i++) {
+                if (used.has(i)) continue;
+                for (let j = i + 1; j < n; j++) {
+                    if (used.has(j)) continue;
+                    if (faces[i].normal.dot(faces[j].normal) < -0.99) {
+                        pairs.push([i, j]);
+                        used.add(i);
+                        used.add(j);
+                        break;
+                    }
+                }
+                if (!used.has(i)) {
+                    pairs.push([i, -1]);
+                    used.add(i);
+                }
+            }
+            pairs.forEach(p => {
+                if (p[1] >= 0 && faces[p[0]].centroid.y < faces[p[1]].centroid.y) {
+                    [p[0], p[1]] = [p[1], p[0]];
+                }
+            });
+            pairs.sort((a, b) => {
+                const aA = Math.atan2(faces[a[0]].centroid.z, faces[a[0]].centroid.x);
+                const bA = Math.atan2(faces[b[0]].centroid.z, faces[b[0]].centroid.x);
+                return aA - bA;
+            });
+            for (let k = 0; k < pairs.length; k++) {
+                numbers[pairs[k][0]] = k;
+                if (pairs[k][1] >= 0) numbers[pairs[k][1]] = target - k;
+            }
+            return numbers;
+        }
+
+        function faceSettleQuat(face) {
+            const n = face.normal.clone().normalize();
+            let ref = new THREE.Vector3(0, 1, 0);
+            if (Math.abs(n.dot(ref)) > 0.99) ref = new THREE.Vector3(0, 0, 1);
+            const refUp = ref.clone().addScaledVector(n, -ref.dot(n)).normalize();
+            const H = 1.2;
+            const pole = face.centroid.y > 0 ?
+                new THREE.Vector3(0, H, 0) :
+                new THREE.Vector3(0, -H, 0);
+            const toPole = new THREE.Vector3().subVectors(pole, face.centroid);
+            toPole.addScaledVector(n, -toPole.dot(n)).normalize();
+            const faceUp = toPole.negate();
+            const xAxis = new THREE.Vector3().crossVectors(faceUp, n).normalize();
+            const m = new THREE.Matrix4().makeBasis(xAxis, faceUp, n);
+            return new THREE.Quaternion().setFromRotationMatrix(m).conjugate();
+        }
+
+        function getNumTexture(num) {
+            const sz = 256;
+            const c = document.createElement('canvas');
+            c.width = sz;
+            c.height = sz;
+            const ctx = c.getContext('2d');
+            ctx.clearRect(0, 0, sz, sz);
+            const text = String(num);
+            const fs = text.length > 1 ? sz * 0.62 : sz * 0.82;
+            ctx.font = `bold ${fs}px "Courier New", monospace`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = 'rgba(0,0,0,0.40)';
+            ctx.fillText(text, sz / 2 + 2, sz / 2 + 2);
+            ctx.fillStyle = '#d4a574';
+            ctx.fillText(text, sz / 2, sz / 2);
+            const tex = new THREE.CanvasTexture(c);
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        function buildDieMesh(colorHex) {
+            const geo = createD10Geometry(1.2);
+            const mat = new THREE.MeshPhongMaterial({
+                color: colorHex,
+                shininess: 40,
+                specular: 0x222222,
+                flatShading: true,
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+
+            const eg = new THREE.EdgesGeometry(geo);
+            const em = new THREE.LineBasicMaterial({
+                color: 0x888888,
+                transparent: true,
+                opacity: 0.12,
+            });
+            mesh.add(new THREE.LineSegments(eg, em));
+
+            const faces = computeFaces(geo);
+            mesh.userData.faces = faces;
+            const faceNumbers = computeFaceNumbers(faces);
+            mesh.userData.faceNumbers = faceNumbers;
+            const numberToFace = {};
+            faceNumbers.forEach((num, idx) => { numberToFace[num] = idx; });
+            mesh.userData.numberToFace = numberToFace;
+
+            const labelSize = 0.68;
+            for (let i = 0; i < faces.length; i++) {
+                const face = faces[i];
+                const num = faceNumbers[i];
+                const tex = getNumTexture(num);
+                const pg = new THREE.PlaneGeometry(labelSize, labelSize);
+                const pm = new THREE.MeshBasicMaterial({
+                    map: tex,
+                    transparent: true,
+                    depthWrite: false,
+                    side: THREE.DoubleSide,
+                });
+                const label = new THREE.Mesh(pg, pm);
+                label.position.copy(face.centroid).addScaledVector(face.normal, 0.02);
+                const sq = faceSettleQuat(face);
+                label.quaternion.copy(sq.conjugate());
+                mesh.add(label);
+            }
+            return mesh;
+        }
+
+        const container = document.getElementById('dice-container');
+        const width = container.clientWidth;
+        const height = container.clientHeight || 200;
+
+        const scene = new THREE.Scene();
+
+        const aspect = width / height;
+        const frustumSize = 4.2;
+        const camera = new THREE.OrthographicCamera(
+            -frustumSize * aspect,
+            frustumSize * aspect,
+            frustumSize,
+            -frustumSize,
+            0.1,
+            100
+        );
+        camera.position.set(0, 0, 10);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(width, height);
+        renderer.setClearColor(0x0a0a0a, 1);
+        container.appendChild(renderer.domElement);
+
+        const ambient = new THREE.AmbientLight(0xffffff, 0.45);
+        scene.add(ambient);
+        const keyLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        keyLight.position.set(5, 8, 5);
+        scene.add(keyLight);
+        const fillLight = new THREE.DirectionalLight(0xffffff, 0.35);
+        fillLight.position.set(-3, -2, 4);
+        scene.add(fillLight);
+        const rimLight = new THREE.DirectionalLight(0x8899bb, 0.25);
+        rimLight.position.set(-2, 4, -6);
+        scene.add(rimLight);
+
+        const colors = [
+            0xc97b5a, 0xd4a06a, 0x8aaa7a, 0x6a8aaa,
+            0x9a7aaa, 0xcc7a8a, 0x6aaa8a
+        ];
+
+        const dice = [];
+        const spacing = 2.2;
+        const startX = -((7 - 1) * spacing) / 2;
+
+        for (let i = 0; i < 7; i++) {
+            const mesh = buildDieMesh(colors[i % colors.length]);
+            mesh.position.set(startX + i * spacing, 0, 0);
+            const faceMap = {};
+            for (let n = 0; n <= 9; n++) {
+                faceMap[n] = mesh.userData.numberToFace[n];
+            }
+            mesh.userData.faceMap = faceMap;
+            mesh.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
+            scene.add(mesh);
+            dice.push(mesh);
+        }
+
+        const ringGeo = new THREE.RingGeometry(4.6, 5.0, 64);
+        const ringMat = new THREE.MeshBasicMaterial({
+            color: 0x222244,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.15,
+        });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.y = -1.8;
+        scene.add(ring);
+
+        const resultSpan = document.getElementById('result-value');
+        const rollBtn = document.getElementById('roll-btn');
+        const hexInput = document.getElementById('hex-input');
+        const outputValueSpan = document.getElementById('output-value');
+
+        function computeSettleQuats(mesh) {
+            const faces = mesh.userData.faces;
+            const quats = {};
+            for (let i = 0; i < faces.length; i++) {
+                quats[i] = faceSettleQuat(faces[i]);
+            }
+            return quats;
+        }
+
+        const settleQuats = dice.map(mesh => computeSettleQuats(mesh));
+
+        let isRolling = false;
+        let animationId = null;
+        let lastRollNumber = 0;
+
+        function updateOutput() {
+            const hex = hexInput.value.trim();
+            if (!hex) {
+                outputValueSpan.textContent = 'Enter hex';
+                return;
+            }
+            
+            try {
+                const key = lastRollNumber.toString();
+                const decrypted = rc4DecryptHex(hex, key);
+                outputValueSpan.textContent = decrypted || '(empty)';
+            } catch (e) {
+                outputValueSpan.textContent = '⚠️ Invalid hex';
+            }
+        }
+
+        hexInput.addEventListener('input', updateOutput);
+
+        function rollDice() {
+            if (isRolling) return;
+            isRolling = true;
+            rollBtn.disabled = true;
+
+            const digits = Array.from({ length: 7 }, () => Math.floor(Math.random() * 10));
+            const number = digits.reduce((acc, d) => acc * 10 + d, 0);
+            lastRollNumber = number;
+            resultSpan.textContent = number.toLocaleString();
+
+            const duration = 650;
+            const startTime = performance.now();
+
+            const targets = digits.map((d, i) => dice[i].userData.faceMap[d]);
+
+            const startQuats = dice.map(die => die.quaternion.clone());
+            const spinAxes = dice.map(() =>
+                new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize()
+            );
+            const spinAngles = dice.map(() => Math.random() * 5 + 3);
+
+            if (animationId) cancelAnimationFrame(animationId);
+
+            function animateRoll(time) {
+                const elapsed = time - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const ease = 1 - Math.pow(1 - progress, 3);
+
+                dice.forEach((die, idx) => {
+                    const targetIdx = targets[idx];
+                    const targetQuat = settleQuats[idx][targetIdx];
+                    const startQuat = startQuats[idx];
+                    const spinQuat = new THREE.Quaternion().setFromAxisAngle(
+                        spinAxes[idx],
+                        spinAngles[idx] * (1 - ease) * 2.5
+                    );
+                    const current = startQuat.clone().multiply(spinQuat);
+                    current.slerp(targetQuat, ease);
+                    die.quaternion.copy(current);
+                });
+
+                if (progress < 1) {
+                    animationId = requestAnimationFrame(animateRoll);
+                } else {
+                    dice.forEach((die, idx) => {
+                        die.quaternion.copy(settleQuats[idx][targets[idx]]);
+                    });
+                    isRolling = false;
+                    rollBtn.disabled = false;
+                    animationId = null;
+                    updateOutput();
+                }
+            }
+
+            animationId = requestAnimationFrame(animateRoll);
+            updateOutput();
+        }
+
+        rollBtn.addEventListener('click', rollDice);
+
+        function render() {
+            renderer.render(scene, camera);
+            requestAnimationFrame(render);
+        }
+        render();
+
+        function onResize() {
+            const w = container.clientWidth;
+            const h = container.clientHeight || 200;
+            const a = w / h;
+            camera.left = -frustumSize * a;
+            camera.right = frustumSize * a;
+            camera.top = frustumSize;
+            camera.bottom = -frustumSize;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+        }
+
+        window.addEventListener('resize', onResize);
+        if (window.ResizeObserver) {
+            const ro = new ResizeObserver(() => onResize());
+            ro.observe(container);
+        }
+
+        setTimeout(() => {
+            rollDice();
+        }, 400);
+    </script>
+</body>
+</html>
